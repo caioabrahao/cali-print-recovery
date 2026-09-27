@@ -3,7 +3,7 @@ import tomllib
 from pathlib import Path
 
 from websockets.asyncio.client import connect
-from cali_prt.core.bookkeeper import saveIndividualRegistry
+from cali_pra.core.bookkeeper import saveIndividualRegistry
 
 CONFIG_PATH = Path("config.toml")
 

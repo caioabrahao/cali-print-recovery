@@ -9,3 +9,10 @@ Connection settings are read from `config.toml` in the project root:
 hostname = "klipper.local"
 port = 7125
 ```
+
+## Run the thing
+
+```sh
+cd src
+python -m cali_pra
+```
