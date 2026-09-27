@@ -1,6 +1,6 @@
-import asyncio
 import json
 from websockets.asyncio.client import connect
+from cali_prt.core.bookkeeper import saveIndividualRegistry
 
 # Configurações do Moonraker
 MOONRAKER_HOSTNAME = "klipper.local"  
@@ -37,6 +37,6 @@ async def moonraker_listener():
                 status_updates = data["params"][0]
             
             else:
-                # Exibe outras mensagens (como a confirmação inicial da inscrição id=1)
                 print(f"Mensagem do sistema: {data}")
+                saveIndividualRegistry(data)
 
