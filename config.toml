@@ -1,0 +1,3 @@
+[moonraker]
+hostname = "klipper.local"
+port = 7125
