@@ -1,10 +1,13 @@
 import json
+import asyncio
 import tomllib
 from pathlib import Path
+from rich.progress import Progress
 
 from websockets.asyncio.client import connect
 import cali_pra.console.logger as logger
 from cali_pra.core.bookkeeper import saveIndividualRegistry
+from cali_pra.schema import currentPrinterState, update_current_printer_state
 
 CONFIG_PATH = Path("config.toml")
 
@@ -26,40 +29,96 @@ MOONRAKER_PORT = MOONRAKER_CONFIG["port"]
 URL = f"ws://{MOONRAKER_HOSTNAME}:{MOONRAKER_PORT}/websocket"
 
 async def moonraker_listener():
+    
     logger.info(f"Establishing Websocket Connection to: {URL}...")
     
-    async with connect(URL) as websocket:
-        logger.info("Websocket connected successfully!")
+    with Progress() as progress:
+        connection_task = progress.add_task("Establishing websocket connection...", total=None)
 
-        subscribe_message = {
-            "jsonrpc": "2.0",
-            "method": "printer.objects.subscribe",
-            "params": {
-                "objects": {
-                    "print_stats": None,
-                    "virtual_sdcard": None,
-                    "toolhead": None,
-                    "extruder": None,
-                    "heater_bed": None,
-                    "gcode_move": None
-                }
-            },
-            "id": 1
-        }
+        async with connect(URL) as websocket:
+            progress.update(connection_task, completed=1, total=1)
+            progress.stop()
 
-        await websocket.send(json.dumps(subscribe_message))
-        print("Moonraker Subscription Requested")
+            logger.info("Websocket connected successfully!")
+
+            subscribe_message = {
+                "jsonrpc": "2.0",
+                "method": "printer.objects.subscribe",
+                "params": {
+                    "objects": {
+                        "print_stats": [
+                            "filename",
+                            "total_duration",
+                            "print_duration",
+                            "filament_used",
+                            "info",
+                        ],
+                        "virtual_sdcard": [
+                            "file_path",
+                            "progress",
+                            "is_active",
+                            "file_position",
+                            "file_size"
+                        ],
+                        "toolhead": [
+                            "homed_axes", 
+                            "print_time",
+                            "stalls",
+                            "estimated_print_time",
+                            "position"
+                        ],
+                        "extruder": [
+                            "target",
+                            "temperature",
+                            "motion_queue",
+                            "power"
+                        ],
+                        "heater_bed": [
+                            "target",
+                            "temperature",
+                            "power",
+                        ],
+                        "gcode_move": [
+                            "speed_factor",
+                            "speed",
+                            "extrude_factor",
+                            "absolute_coordinates",
+                            "absolute_extrude",
+                            "homing_origin",
+                            "position",
+                            "gcode_position"
+                        ]
+                    }
+                },
+                "id": 1
+            }
+
+            await websocket.send(json.dumps(subscribe_message))
+            logger.debug("Moonraker Subscription Requested")
 
 
-        async for message in websocket:
-            data = json.loads(message)
-            
-            if "method" in data and data["method"] == "notify_status_update":
-                status_updates = data["params"][0]
-                logger.debug(f"Update: {status_updates}")
-                saveIndividualRegistry(status_updates)
+            async for message in websocket:
+                data = json.loads(message)
+                
+                if "method" in data and data["method"] == "notify_status_update":
+                    status_updates = data["params"][0]
+                    update_current_printer_state(status_updates)
+                    logger.debugJson(currentPrinterState)
+                    
+                    logger.debug(f"Update: {status_updates}")
+                    # saveIndividualRegistry(status_updates)
 
-            # else:
-            #     print(f"Mensagem do sistema: {data}")
-            #     saveIndividualRegistry(data)
+                # else:
+                #     print(f"Mensagem do sistema: {data}")
+                #     saveIndividualRegistry(data)
 
+
+def start_websocket():
+    try:
+        asyncio.run(moonraker_listener())
+    except KeyboardInterrupt:
+        logger.warn("Client Disconnected by User")
+    except Exception as e:
+        
+        logger.error(f"Connection Error: {e}")
+        logger.error("Is the connection properly configured?")
