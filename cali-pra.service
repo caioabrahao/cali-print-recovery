@@ -1,0 +1,20 @@
+[Unit]
+Description=Cali Print Recovery Assistant
+After=network-online.target moonraker.service
+Wants=network-online.target moonraker.service
+
+[Service]
+Type=simple
+
+User=pi
+WorkingDirectory=~/cali-pra
+
+ExecStart=~/cali-pra/.venv/bin/python -m cali_pra
+
+Restart=on-failure
+RestartSec=3
+
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

@@ -8,7 +8,6 @@ from cali_pra.core.bookkeeper import saveIndividualRegistry
 from cali_pra.config import load_moonraker_config
 from cali_pra.schema import currentPrinterState, update_current_printer_state
 
-from dataclasses import asdict
 
 MOONRAKER_CONFIG = load_moonraker_config()
 MOONRAKER_HOSTNAME = MOONRAKER_CONFIG["hostname"]
