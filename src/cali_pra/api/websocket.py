@@ -51,7 +51,7 @@ async def moonraker_listener():
                             "total_duration",
                             "print_duration",
                             "filament_used",
-                            "info",
+                            "info"
                         ],
                         "virtual_sdcard": [
                             "file_path",
@@ -103,9 +103,13 @@ async def moonraker_listener():
                 if "method" in data and data["method"] == "notify_status_update":
                     status_updates = data["params"][0]
                     update_current_printer_state(status_updates)
-                    logger.debugJson(currentPrinterState)
-                    
-                    logger.debug(f"Update: {status_updates}")
+
+                    # saves a registry upon layer change
+                    if "current_layer" in status_updates:
+                        saveIndividualRegistry(currentPrinterState)
+                    # logger.debugJson(currentPrinterState)
+                    # logger.debug(f"Update: {status_updates}")
+
                     # saveIndividualRegistry(status_updates)
 
                 # else:
