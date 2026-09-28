@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field, fields, is_dataclass
 from datetime import datetime, timezone
+import time
 from typing import Mapping, Optional
 
 @dataclass
@@ -80,7 +81,7 @@ def _apply_status_update(target: object, values: Mapping[str, object]) -> None:
 def update_current_printer_state(status_updates: Mapping[str, object]) -> None:
     """Merge a Moonraker status update into the shared printer state."""
     _apply_status_update(currentPrinterState, status_updates)
-    currentPrinterState.timestamp = datetime.now(timezone.utc)
+    currentPrinterState.timestamp = str(int(time.time())) # type: ignore
 
 
 @dataclass

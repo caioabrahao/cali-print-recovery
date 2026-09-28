@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 import cali_pra.console.logger as logger
 
 currentDir = Path(__file__).resolve()
-REGISTRY_DIR = currentDir.parent.parent.parent.parent / "bookkeeper" / "registry"
+REGISTRY_DIR = currentDir.parent.parent.parent.parent / "registries"
 
 
 def saveIndividualRegistry(registryData):
