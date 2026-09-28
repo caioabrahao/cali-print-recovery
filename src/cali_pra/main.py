@@ -1,15 +1,17 @@
 import asyncio
 from cali_pra.api.websocket import moonraker_listener
+import cali_pra.console.logger as logger
 
 
 def start_websocket():
     try:
         asyncio.run(moonraker_listener())
     except KeyboardInterrupt:
-        print("\nCliente desconectado pelo usuário.")
+        logger.warn("Client Disconnected by User")
     except Exception as e:
-        print(f"Erro na conexão: {e}")
+        logger.error(f"Connection Error: {e}")
+        logger.error("Is the connection properly configured?")
 
 def main ():
-    print("Cali Print Recovery Running!")
+    logger.console.print("Cali Print Recovery Bookkeeper Started")
     start_websocket()

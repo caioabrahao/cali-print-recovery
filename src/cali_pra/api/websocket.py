@@ -3,6 +3,7 @@ import tomllib
 from pathlib import Path
 
 from websockets.asyncio.client import connect
+import cali_pra.console.logger as logger
 from cali_pra.core.bookkeeper import saveIndividualRegistry
 
 CONFIG_PATH = Path("config.toml")
@@ -25,10 +26,10 @@ MOONRAKER_PORT = MOONRAKER_CONFIG["port"]
 URL = f"ws://{MOONRAKER_HOSTNAME}:{MOONRAKER_PORT}/websocket"
 
 async def moonraker_listener():
-    print(f"Establishing Websocket Connection to: {URL}...")
+    logger.info(f"Establishing Websocket Connection to: {URL}...")
     
     async with connect(URL) as websocket:
-        print("Websocket connected successfully!")
+        logger.info("Websocket connected successfully!")
 
         subscribe_message = {
             "jsonrpc": "2.0",
@@ -55,7 +56,7 @@ async def moonraker_listener():
             
             if "method" in data and data["method"] == "notify_status_update":
                 status_updates = data["params"][0]
-                print(f"Update: {status_updates}")
+                logger.debug(f"Update: {status_updates}")
                 saveIndividualRegistry(status_updates)
 
             # else:

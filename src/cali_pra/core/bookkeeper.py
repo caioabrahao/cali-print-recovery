@@ -2,6 +2,7 @@ from pathlib import Path
 import json
 import time
 from datetime import datetime, timezone
+import cali_pra.console.logger as logger
 
 currentDir = Path(__file__).resolve()
 REGISTRY_DIR = currentDir.parent.parent.parent.parent / "bookkeeper" / "registry"
@@ -48,11 +49,11 @@ def saveIndividualRegistry(registryData):
     with open(fileName, "w", encoding="utf-8") as arquivo:
         json.dump(normalize_registry(registryData), arquivo, ensure_ascii=False, indent=4)
 
-    print(f"Registry created at: {REGISTRY_DIR.resolve()}")
-    limpar_arquivos_antigos()
+    logger.debug(f"Registry created at: {REGISTRY_DIR.resolve()}")
+    clearOldRegistries()
 
 
-def limpar_arquivos_antigos():
+def clearOldRegistries():
     arquivos = [f for f in REGISTRY_DIR.iterdir() if f.is_file()]
     arquivos.sort(key=lambda f: f.stat().st_mtime)
 
