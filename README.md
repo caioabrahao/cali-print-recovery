@@ -12,6 +12,29 @@ port = 7125
 
 ## Run the thing
 
+Make the virtual environment first:
+
+```sh
+python -m venv venv
+
+# for cmd
+venv\Scripts\activate.bat 
+
+# for power shell
+venv\Scripts\Activate.ps1
+
+# for mac or the penguin
+source venv/bin/activate 
+```
+
+Install the requirements:
+
+```sh
+pip install -r requirements.txt
+```
+
+Then:
+
 ```sh
 cd src
 python -m cali_pra
