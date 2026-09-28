@@ -1,32 +1,29 @@
 import json
 import asyncio
-import tomllib
-from pathlib import Path
 from rich.progress import Progress
 
 from websockets.asyncio.client import connect
 import cali_pra.console.logger as logger
 from cali_pra.core.bookkeeper import saveIndividualRegistry
+from cali_pra.config import load_moonraker_config
 from cali_pra.schema import currentPrinterState, update_current_printer_state
 
-CONFIG_PATH = Path("config.toml")
-
-
-def load_moonraker_config():
-    config = {"hostname": "klipper.local", "port": 7125}
-
-    if CONFIG_PATH.exists():
-        with CONFIG_PATH.open("rb") as config_file:
-            moonraker_config = tomllib.load(config_file).get("moonraker", {})
-            config.update(moonraker_config)
-
-    return config
-
+from dataclasses import asdict
 
 MOONRAKER_CONFIG = load_moonraker_config()
 MOONRAKER_HOSTNAME = MOONRAKER_CONFIG["hostname"]
 MOONRAKER_PORT = MOONRAKER_CONFIG["port"]
 URL = f"ws://{MOONRAKER_HOSTNAME}:{MOONRAKER_PORT}/websocket"
+
+
+def _contains_current_layer_update(value):
+    if isinstance(value, dict):
+        if "current_layer" in value:
+            return True
+        return any(_contains_current_layer_update(item) for item in value.values())
+
+    return False
+
 
 async def moonraker_listener():
     
@@ -94,27 +91,24 @@ async def moonraker_listener():
             }
 
             await websocket.send(json.dumps(subscribe_message))
-            logger.debug("Moonraker Subscription Requested")
-
+            # logger.info("Moonraker Subscription Requested")
 
             async for message in websocket:
                 data = json.loads(message)
+
+                if "status" in data:
+                    logger.info("Websocket connection Established.")
                 
                 if "method" in data and data["method"] == "notify_status_update":
                     status_updates = data["params"][0]
                     update_current_printer_state(status_updates)
 
-                    # saves a registry upon layer change
-                    if "current_layer" in status_updates:
-                        saveIndividualRegistry(currentPrinterState)
-                    # logger.debugJson(currentPrinterState)
-                    # logger.debug(f"Update: {status_updates}")
-
-                    # saveIndividualRegistry(status_updates)
-
-                # else:
-                #     print(f"Mensagem do sistema: {data}")
-                #     saveIndividualRegistry(data)
+                    # Save a registry whenever Moonraker reports a layer update.
+                    if _contains_current_layer_update(status_updates):
+                        saveIndividualRegistry(status_updates)
+                        logger.info("Layer change detected; registry saved.")
+                        logger.debugJson(json.dumps(status_updates))
+                    # logger.debugJson(json.dumps(asdict(currentPrinterState)))
 
 
 def start_websocket():
@@ -123,6 +117,4 @@ def start_websocket():
     except KeyboardInterrupt:
         logger.warn("Client Disconnected by User")
     except Exception as e:
-        
-        logger.error(f"Connection Error: {e}")
-        logger.error("Is the connection properly configured?")
+        logger.error(f"Runtime Error: {e}")
